@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Наши финансы" />
+  <title>💑 Наши финансы</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { background: #0d0d14; overscroll-behavior: none; -webkit-font-smoothing: antialiased; }
+    #root { min-height: 100vh; }
+    input[type=range] { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px; background: #2a2a40; outline: none; cursor: pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #a78bfa; cursor: pointer; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #252538; border-radius: 4px; }
+    input, select, button { font-family: inherit; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+// ── Palette
+const C = {
+  bg: "#0d0d14", surface: "#13131f", card: "#1a1a2b", border: "#252538",
+  accent: "#a78bfa", accent2: "#f472b6", accent3: "#60a5fa",
+  success: "#34d399", warn: "#fbbf24", danger: "#f87171",
+  text: "#e2e0f0", muted: "#6b6888", faint: "#2a2a40",
+};
+
+const fmt = (n) => new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(n || 0);
+const today = () => new Date().toISOString().slice(0, 10);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const CATS = ["🍕 Еда","🚗 Транспорт","🏠 Жильё","👗 Одежда","💊 Здоровье","🎮 Развлечения","✈️ Путешествия","💡 Коммуналка","🎁 Подарки","📦 Прочее"];
+const STORE_KEY = "couple-app-v1";
+
+// localStorage storage
+const storage = {
+  get: (key) => { try { const v = localStorage.getItem(key); return v ? { value: v } : null; } catch { return null; } },
+  set: (key, val) => { try { localStorage.setItem(key, val); } catch {} },
+};
+
+function loadState() { const r = storage.get(STORE_KEY); return r ? JSON.parse(r.value) : null; }
+function saveState(s) { storage.set(STORE_KEY, JSON.stringify(s)); }
+
+const INIT = { budget: 0, expenses: [], goals: [] };
+
+// ── UI atoms
+const Card = ({ children, style = {} }) => (
+  <div style={{ background: C.card, borderRadius: 16, padding: 20, border: `1px solid ${C.border}`, ...style }}>{children}</div>
+);
+const Inp = ({ style = {}, ...p }) => (
+  <input style={{ background: C.faint, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "9px 12px", color: C.text, fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box", ...style }} {...p} />
+);
+const Sel = ({ children, style = {}, ...p }) => (
+  <select style={{ background: C.faint, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "9px 12px", color: C.text, fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box", ...style }} {...p}>{children}</select>
+);
+const Btn = ({ children, color = C.accent, ghost, style = {}, ...p }) => (
+  <button style={{ background: ghost ? "transparent" : color, border: `1.5px solid ${color}`, color: ghost ? color : "#fff", borderRadius: 10, padding: "9px 18px", fontSize: 14, cursor: "pointer", fontWeight: 600, ...style }} {...p}>{children}</button>
+);
+const Lbl = ({ children }) => (
+  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 6 }}>{children}</div>
+);
+const Bar = ({ value, max, color = C.accent }) => {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  return <div style={{ background: C.faint, borderRadius: 99, height: 8, overflow: "hidden" }}><div style={{ width: `${pct}%`, background: color, height: "100%", borderRadius: 99, transition: "width .4s" }} /></div>;
+};
+const Pill = ({ children, active, color = C.accent, onClick }) => (
+  <button onClick={onClick} style={{ background: active ? color : "transparent", border: `1.5px solid ${active ? color : C.border}`, color: active ? "#fff" : C.muted, borderRadius: 20, padding: "5px 12px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>{children}</button>
+);
+
+let _toast;
+const toast = (m) => _toast && _toast(m);
+
+// ── Budget tab
+function BudgetTab({ state, setState }) {
+  const [amount, setAmount] = useState("");
+  const [cat, setCat] = useState(CATS[0]);
+  const [note, setNote] = useState("");
+  const [who, setWho] = useState("Я");
+  const [filter, setFilter] = useState("Все");
+  const [editBudget, setEditBudget] = useState(false);
+  const [newBudget, setNewBudget] = useState("");
+
+  const expenses = state.expenses || [];
+  const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
+  const remaining = (state.budget || 0) - totalSpent;
+  const pct = state.budget > 0 ? Math.min(100, (totalSpent / state.budget) * 100) : 0;
+  const barColor = pct > 90 ? C.danger : pct > 65 ? C.warn : C.success;
+
+  const addExpense = () => {
+    const n = parseFloat(amount);
+    if (!n || n <= 0) return;
+    setState(s => ({ ...s, expenses: [{ id: uid(), amount: n, cat, note, who, date: today() }, ...s.expenses] }));
+    setAmount(""); setNote("");
+    toast("Расход добавлен ✓");
+  };
+
+  const saveBudget = () => {
+    const n = parseFloat(newBudget);
+    if (!n) return;
+    setState(s => ({ ...s, budget: n }));
+    setEditBudget(false);
+    toast("Бюджет сохранён ✓");
+  };
+
+  const byCat = {};
+  expenses.forEach(e => { byCat[e.cat] = (byCat[e.cat] || 0) + e.amount; });
+  const topCats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const filtered = filter === "Все" ? expenses : expenses.filter(e => e.cat === filter);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+          <div>
+            <Lbl>Общий бюджет</Lbl>
+            {editBudget ? (
+              <div style={{ display: "flex", gap: 8 }}>
+                <Inp value={newBudget} onChange={e => setNewBudget(e.target.value)} placeholder="50000" type="number" style={{ width: 130 }} autoFocus />
+                <Btn onClick={saveBudget} style={{ padding: "8px 12px" }}>✓</Btn>
+                <Btn ghost onClick={() => setEditBudget(false)} style={{ padding: "8px 12px" }}>✕</Btn>
+              </div>
+            ) : (
+              <div onClick={() => { setNewBudget(state.budget || ""); setEditBudget(true); }} style={{ fontSize: 26, fontWeight: 800, color: C.text, cursor: "pointer" }}>
+                {state.budget ? fmt(state.budget) : <span style={{ color: C.muted, fontSize: 15 }}>Нажмите, чтобы задать</span>}
+              </div>
+            )}
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <Lbl>Остаток</Lbl>
+            <div style={{ fontSize: 20, fontWeight: 700, color: remaining >= 0 ? C.success : C.danger }}>{fmt(remaining)}</div>
+          </div>
+        </div>
+        <Bar value={totalSpent} max={state.budget || 1} color={barColor} />
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
+          <span style={{ fontSize: 12, color: C.muted }}>Потрачено: {fmt(totalSpent)}</span>
+          <span style={{ fontSize: 12, color: C.muted }}>{Math.round(pct)}%</span>
+        </div>
+      </Card>
+
+      {topCats.length > 0 && (
+        <Card>
+          <Lbl>Топ расходов</Lbl>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {topCats.map(([c, v]) => (
+              <div key={c}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: C.text }}>{c}</span>
+                  <span style={{ fontSize: 13, color: C.muted }}>{fmt(v)}</span>
+                </div>
+                <Bar value={v} max={totalSpent} color={C.accent} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <Card>
+        <Lbl>Добавить расход</Lbl>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+          <div>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Сумма ₽</div>
+            <Inp value={amount} onChange={e => setAmount(e.target.value)} placeholder="1500" type="number" onKeyDown={e => e.key === "Enter" && addExpense()} />
+          </div>
+          <div>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Кто тратил</div>
+            <Sel value={who} onChange={e => setWho(e.target.value)}>
+              <option>Я</option><option>Она</option><option>Вместе</option>
+            </Sel>
+          </div>
+        </div>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Категория</div>
+          <Sel value={cat} onChange={e => setCat(e.target.value)}>{CATS.map(c => <option key={c}>{c}</option>)}</Sel>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Заметка</div>
+          <Inp value={note} onChange={e => setNote(e.target.value)} placeholder="Кафе на Арбате" />
+        </div>
+        <Btn onClick={addExpense} style={{ width: "100%" }}>+ Добавить</Btn>
+      </Card>
+
+      {expenses.length > 0 && (
+        <Card>
+          <Lbl>История</Lbl>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+            {["Все", ...CATS].map(c => (
+              <Pill key={c} active={filter === c} onClick={() => setFilter(c)}>{c.split(" ")[0] || c}</Pill>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filtered.slice(0, 25).map(e => (
+              <div key={e.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: C.faint, borderRadius: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 20 }}>{e.cat.split(" ")[0]}</span>
+                  <div>
+                    <div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{e.cat.split(" ").slice(1).join(" ")}</div>
+                    <div style={{ fontSize: 11, color: C.muted }}>{e.note || e.date} · {e.who}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.danger }}>−{fmt(e.amount)}</span>
+                  <button onClick={() => setState(s => ({ ...s, expenses: s.expenses.filter(x => x.id !== e.id) }))} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 18, lineHeight: 1 }}>×</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ── Goals tab
+function GoalsTab({ state, setState }) {
+  const [name, setName] = useState("");
+  const [target, setTarget] = useState("");
+  const [emoji, setEmoji] = useState("🎯");
+  const [addAmt, setAddAmt] = useState({});
+  const goals = state.goals || [];
+  const EMOJIS = ["🎯","✈️","🏠","🚗","💍","📱","🎮","🐕","👶","🌴","💻","🎸"];
+
+  const addGoal = () => {
+    if (!name || !target) return;
+    setState(s => ({ ...s, goals: [...s.goals, { id: uid(), name, target: parseFloat(target), saved: 0, emoji, created: today() }] }));
+    setName(""); setTarget(""); setEmoji("🎯");
+    toast("Цель создана 🎯");
+  };
+
+  const contribute = (id) => {
+    const n = parseFloat(addAmt[id]);
+    if (!n || n <= 0) return;
+    setState(s => ({ ...s, goals: s.goals.map(g => g.id === id ? { ...g, saved: Math.min(g.target, g.saved + n) } : g) }));
+    setAddAmt(a => ({ ...a, [id]: "" }));
+    toast("Накопления обновлены ✓");
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {goals.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Card style={{ padding: 16 }}>
+            <Lbl>Целей</Lbl>
+            <div style={{ fontSize: 28, fontWeight: 800, color: C.accent }}>{goals.length}</div>
+          </Card>
+          <Card style={{ padding: 16 }}>
+            <Lbl>Накоплено</Lbl>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.success }}>{fmt(goals.reduce((s, g) => s + g.saved, 0))}</div>
+          </Card>
+        </div>
+      )}
+
+      {goals.map(g => {
+        const pct = g.target > 0 ? Math.min(100, (g.saved / g.target) * 100) : 0;
+        const done = pct >= 100;
+        return (
+          <Card key={g.id} style={{ position: "relative", border: `1px solid ${done ? C.success : C.border}` }}>
+            {done && <div style={{ position: "absolute", top: -10, right: 16, background: C.success, color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 99, padding: "2px 10px" }}>ДОСТИГНУТО 🎉</div>}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 28 }}>{g.emoji}</span>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{g.name}</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>Цель: {fmt(g.target)}</div>
+                </div>
+              </div>
+              <button onClick={() => setState(s => ({ ...s, goals: s.goals.filter(x => x.id !== g.id) }))} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 18 }}>×</button>
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{fmt(g.saved)}</span>
+                <span style={{ fontSize: 13, color: C.muted }}>{Math.round(pct)}%</span>
+              </div>
+              <Bar value={g.saved} max={g.target} color={done ? C.success : pct > 50 ? C.accent : C.accent2} />
+              <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>Осталось: {fmt(Math.max(0, g.target - g.saved))}</div>
+            </div>
+            {!done && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <Inp value={addAmt[g.id] || ""} onChange={e => setAddAmt(a => ({ ...a, [g.id]: e.target.value }))} placeholder="Добавить ₽" type="number" onKeyDown={e => e.key === "Enter" && contribute(g.id)} />
+                <Btn onClick={() => contribute(g.id)} color={C.success} style={{ whiteSpace: "nowrap", padding: "9px 14px" }}>+ Пополнить</Btn>
+              </div>
+            )}
+          </Card>
+        );
+      })}
+
+      <Card>
+        <Lbl>Новая цель</Lbl>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Иконка</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {EMOJIS.map(e => (
+              <button key={e} onClick={() => setEmoji(e)} style={{ fontSize: 20, background: emoji === e ? C.faint : "transparent", border: `1.5px solid ${emoji === e ? C.accent : "transparent"}`, borderRadius: 8, padding: "4px 8px", cursor: "pointer" }}>{e}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Название</div>
+          <Inp value={name} onChange={e => setName(e.target.value)} placeholder="Отпуск в Таиланде" />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Сумма ₽</div>
+          <Inp value={target} onChange={e => setTarget(e.target.value)} placeholder="150000" type="number" onKeyDown={e => e.key === "Enter" && addGoal()} />
+        </div>
+        <Btn onClick={addGoal} color={C.accent2} style={{ width: "100%" }}>+ Создать цель</Btn>
+      </Card>
+    </div>
+  );
+}
+
+// ── Main App
+function CoupleApp() {
+  const [tab, setTab] = useState("budget");
+  const [state, setStateRaw] = useState(INIT);
+  const [loading, setLoading] = useState(true);
+  const [toastMsg, setToastMsg] = useState("");
+
+  _toast = (m) => { setToastMsg(m); setTimeout(() => setToastMsg(""), 2500); };
+
+  useEffect(() => {
+    const s = loadState();
+    if (s) setStateRaw(s);
+    setLoading(false);
+  }, []);
+
+  const setState = useCallback((updater) => {
+    setStateRaw(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveState(next);
+      return next;
+    });
+  }, []);
+
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: C.muted, fontSize: 16 }}>Загружаем данные…</div>
+    </div>
+  );
+
+  const TABS = [{ id: "budget", label: "💰 Бюджет" }, { id: "goals", label: "🎯 Цели" }];
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div style={{ padding: "14px 20px 0", background: C.surface, borderBottom: `1px solid ${C.border}`, position: "sticky", top: 0, zIndex: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: C.text }}>💑 Наши финансы</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ background: C.faint, borderRadius: 99, padding: "4px 10px", fontSize: 12, color: C.accent2 }}>👩 Она</div>
+            <div style={{ background: C.faint, borderRadius: 99, padding: "4px 10px", fontSize: 12, color: C.accent3 }}>👨 Он</div>
+          </div>
+        </div>
+        <div style={{ display: "flex" }}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: `2.5px solid ${tab === t.id ? C.accent : "transparent"}`, color: tab === t.id ? C.accent : C.muted, fontSize: 14, fontWeight: tab === t.id ? 700 : 400, cursor: "pointer" }}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: 16, maxWidth: 540, margin: "0 auto" }}>
+        {tab === "budget" && <BudgetTab state={state} setState={setState} />}
+        {tab === "goals" && <GoalsTab state={state} setState={setState} />}
+      </div>
+
+      {toastMsg && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: C.accent, color: "#fff", borderRadius: 12, padding: "10px 22px", fontSize: 14, fontWeight: 600, boxShadow: "0 4px 24px rgba(0,0,0,.4)", zIndex: 100, whiteSpace: "nowrap" }}>{toastMsg}</div>
+      )}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<CoupleApp />);
+</script>
+</body>
+</html>
