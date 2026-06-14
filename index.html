@@ -10,11 +10,10 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { background: #0d0d14; color: #e2e0f0; font-family: -apple-system, system-ui, sans-serif; min-height: 100vh; }
-  
-  /* Header */
   .header { background: #13131f; border-bottom: 1px solid #252538; padding: 14px 16px 0; position: sticky; top: 0; z-index: 10; }
   .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .header-title { font-size: 18px; font-weight: 800; }
+  .sync-status { font-size: 11px; color: #6b6888; margin-top: 2px; }
   .badges { display: flex; gap: 6px; }
   .badge { background: #2a2a40; border-radius: 99px; padding: 4px 10px; font-size: 12px; }
   .badge.her { color: #f472b6; }
@@ -22,45 +21,27 @@
   .tabs { display: flex; }
   .tab { flex: 1; padding: 10px 0; background: none; border: none; border-bottom: 2.5px solid transparent; color: #6b6888; font-size: 14px; font-weight: 400; cursor: pointer; font-family: inherit; }
   .tab.active { border-bottom-color: #a78bfa; color: #a78bfa; font-weight: 700; }
-
-  /* Content */
   .content { padding: 16px; max-width: 540px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
   .hidden { display: none !important; }
-
-  /* Cards */
   .card { background: #1a1a2b; border-radius: 16px; padding: 20px; border: 1px solid #252538; }
-  
-  /* Labels */
   .lbl { font-size: 11px; font-weight: 700; color: #6b6888; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
-
-  /* Inputs */
   input, select { background: #2a2a40; border: 1.5px solid #252538; border-radius: 10px; padding: 9px 12px; color: #e2e0f0; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; font-family: inherit; -webkit-appearance: none; }
   select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6888' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-
-  /* Buttons */
   .btn { border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; cursor: pointer; font-weight: 600; font-family: inherit; width: 100%; }
   .btn-primary { background: #a78bfa; color: #fff; }
   .btn-rose { background: #f472b6; color: #fff; }
   .btn-green { background: #34d399; color: #fff; }
   .btn-ghost { background: transparent; border: 1.5px solid #a78bfa; color: #a78bfa; }
   .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; }
-
-  /* Grid */
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .row { display: flex; gap: 8px; align-items: center; }
-
-  /* Progress bar */
   .bar-wrap { background: #2a2a40; border-radius: 99px; height: 8px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 99px; transition: width .4s; }
-
-  /* Budget overview */
   .budget-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
   .budget-amount { font-size: 26px; font-weight: 800; cursor: pointer; }
   .budget-remaining { text-align: right; }
   .remaining-val { font-size: 20px; font-weight: 700; }
   .bar-meta { display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px; color: #6b6888; }
-
-  /* Expense item */
   .expense-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #2a2a40; border-radius: 12px; margin-bottom: 8px; }
   .expense-left { display: flex; align-items: center; gap: 10px; }
   .expense-emoji { font-size: 20px; }
@@ -69,18 +50,12 @@
   .expense-right { display: flex; align-items: center; gap: 8px; }
   .expense-amount { font-size: 14px; font-weight: 700; color: #f87171; }
   .del-btn { background: none; border: none; color: #6b6888; cursor: pointer; font-size: 20px; line-height: 1; padding: 0 4px; }
-
-  /* Pills */
   .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
   .pill { background: transparent; border: 1.5px solid #252538; color: #6b6888; border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: inherit; }
   .pill.active { background: #a78bfa; border-color: #a78bfa; color: #fff; }
-
-  /* Top cats */
   .top-cat { margin-bottom: 10px; }
   .top-cat-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
-
-  /* Goals */
-  .goal-card { background: #1a1a2b; border-radius: 16px; padding: 20px; border: 1px solid #252538; margin-bottom: 0; position: relative; }
+  .goal-card { background: #1a1a2b; border-radius: 16px; padding: 20px; border: 1px solid #252538; margin-bottom: 16px; position: relative; }
   .goal-card.done { border-color: #34d399; }
   .goal-done-badge { position: absolute; top: -10px; right: 16px; background: #34d399; color: #fff; font-size: 11px; font-weight: 700; border-radius: 99px; padding: 2px 10px; }
   .goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
@@ -90,30 +65,32 @@
   .goal-target { font-size: 12px; color: #6b6888; }
   .goal-bar-meta { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
   .goal-remaining { font-size: 11px; color: #6b6888; margin-top: 4px; }
-
-  /* Emoji picker */
   .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
   .emoji-btn { font-size: 20px; background: transparent; border: 1.5px solid transparent; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
   .emoji-btn.selected { background: #2a2a40; border-color: #a78bfa; }
-
-  /* Toast */
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #a78bfa; color: #fff; border-radius: 12px; padding: 10px 22px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 24px rgba(0,0,0,.4); z-index: 100; white-space: nowrap; display: none; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); border-radius: 12px; padding: 10px 22px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 24px rgba(0,0,0,.4); z-index: 100; white-space: nowrap; display: none; }
   .toast.show { display: block; }
-
-  /* Edit budget inline */
+  .toast.success { background: #a78bfa; color: #fff; }
+  .toast.error { background: #f87171; color: #fff; }
   .edit-budget-row { display: flex; gap: 8px; align-items: center; }
   .edit-budget-row input { width: 130px; }
-
   .field-label { font-size: 12px; color: #6b6888; margin-bottom: 4px; }
   .mb10 { margin-bottom: 10px; }
   .mb12 { margin-bottom: 12px; }
+  .loader { text-align: center; padding: 40px; color: #6b6888; font-size: 15px; }
+  .sync-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #34d399; margin-right: 4px; vertical-align: middle; }
+  .sync-dot.syncing { background: #fbbf24; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="header-top">
-    <div class="header-title">💑 Наши финансы</div>
+    <div>
+      <div class="header-title">💑 Наши финансы</div>
+      <div class="sync-status"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">Загрузка...</span></div>
+    </div>
     <div class="badges">
       <span class="badge her">👩 Она</span>
       <span class="badge him">👨 Он</span>
@@ -127,9 +104,9 @@
 
 <!-- BUDGET TAB -->
 <div id="tab-budget" class="content">
+  <div class="loader" id="budget-loader">⟳ Загружаем данные...</div>
 
-  <!-- Overview -->
-  <div class="card" id="budget-overview">
+  <div class="card hidden" id="budget-overview">
     <div class="budget-row">
       <div>
         <div class="lbl">Общий бюджет</div>
@@ -152,14 +129,12 @@
     </div>
   </div>
 
-  <!-- Top categories -->
   <div class="card hidden" id="top-cats-card">
     <div class="lbl">Топ расходов</div>
     <div id="top-cats-list"></div>
   </div>
 
-  <!-- Add expense -->
-  <div class="card">
+  <div class="card hidden" id="add-expense-card">
     <div class="lbl">Добавить расход</div>
     <div class="grid2 mb10">
       <div>
@@ -168,25 +143,15 @@
       </div>
       <div>
         <div class="field-label">Кто тратил</div>
-        <select id="exp-who">
-          <option>Я</option>
-          <option>Она</option>
-          <option>Вместе</option>
-        </select>
+        <select id="exp-who"><option>Я</option><option>Она</option><option>Вместе</option></select>
       </div>
     </div>
     <div class="mb10">
       <div class="field-label">Категория</div>
       <select id="exp-cat">
-        <option>🍕 Еда</option>
-        <option>🚗 Транспорт</option>
-        <option>🏠 Жильё</option>
-        <option>👗 Одежда</option>
-        <option>💊 Здоровье</option>
-        <option>🎮 Развлечения</option>
-        <option>✈️ Путешествия</option>
-        <option>💡 Коммуналка</option>
-        <option>🎁 Подарки</option>
+        <option>🍕 Еда</option><option>🚗 Транспорт</option><option>🏠 Жильё</option>
+        <option>👗 Одежда</option><option>💊 Здоровье</option><option>🎮 Развлечения</option>
+        <option>✈️ Путешествия</option><option>💡 Коммуналка</option><option>🎁 Подарки</option>
         <option>📦 Прочее</option>
       </select>
     </div>
@@ -197,7 +162,6 @@
     <button class="btn btn-primary" onclick="addExpense()">+ Добавить</button>
   </div>
 
-  <!-- History -->
   <div class="card hidden" id="history-card">
     <div class="lbl">История</div>
     <div class="pills" id="filter-pills"></div>
@@ -207,8 +171,8 @@
 
 <!-- GOALS TAB -->
 <div id="tab-goals" class="content hidden">
+  <div class="loader" id="goals-loader">⟳ Загружаем данные...</div>
 
-  <!-- Summary -->
   <div class="grid2 hidden" id="goals-summary">
     <div class="card" style="padding:16px">
       <div class="lbl">Целей</div>
@@ -220,11 +184,9 @@
     </div>
   </div>
 
-  <!-- Goals list -->
   <div id="goals-list"></div>
 
-  <!-- Add goal -->
-  <div class="card">
+  <div class="card hidden" id="add-goal-card">
     <div class="lbl">Новая цель</div>
     <div class="mb10">
       <div class="field-label">Иконка</div>
@@ -245,44 +207,90 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── State
-const STORE = 'couple-v1';
+const API_KEY = '$2a$10$6oSdeinFx8lmAnbZym6T9Oju.DqIn3Vs6MgbHvcV8dlBb2hILFZdW';
+const BIN_ID  = '6a2e6504f5f4af5e29ef2267';
+const BASE    = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+
 let state = { budget: 0, expenses: [], goals: [] };
 let filterCat = 'Все';
 let selectedEmoji = '🎯';
+let saving = false;
 
 const EMOJIS = ['🎯','✈️','🏠','🚗','💍','📱','🎮','🐕','👶','🌴','💻','🎸'];
-const CATS = ['🍕 Еда','🚗 Транспорт','🏠 Жильё','👗 Одежда','💊 Здоровье','🎮 Развлечения','✈️ Путешествия','💡 Коммуналка','🎁 Подарки','📦 Прочее'];
-
-// ── Storage
-function load() {
-  try { const v = localStorage.getItem(STORE); if (v) state = JSON.parse(v); } catch {}
-}
-function save() {
-  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {}
-}
-
-// ── Helpers
-const fmt = n => '₽' + Math.round(n || 0).toLocaleString('ru-RU');
-const uid = () => Math.random().toString(36).slice(2,9);
-const today = () => new Date().toISOString().slice(0,10);
+const CATS   = ['🍕 Еда','🚗 Транспорт','🏠 Жильё','👗 Одежда','💊 Здоровье','🎮 Развлечения','✈️ Путешествия','💡 Коммуналка','🎁 Подарки','📦 Прочее'];
 
 // ── Toast
-function showToast(msg) {
+function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Sync status
+function setSyncStatus(status) {
+  const dot  = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  if (status === 'ok')      { dot.className='sync-dot';         text.textContent='✓ Данные общие'; }
+  if (status === 'syncing') { dot.className='sync-dot syncing'; text.textContent='⟳ Синхронизация...'; }
+  if (status === 'error')   { dot.className='sync-dot'; dot.style.background='#f87171'; text.textContent='Ошибка синхронизации'; }
+}
+
+// ── API
+async function loadFromCloud() {
+  try {
+    const r = await fetch(BASE + '/latest', {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    state = data.record || { budget: 0, expenses: [], goals: [] };
+    if (!state.expenses) state.expenses = [];
+    if (!state.goals) state.goals = [];
+    setSyncStatus('ok');
+    return true;
+  } catch {
+    setSyncStatus('error');
+    showToast('Нет соединения, работаем офлайн', 'error');
+    const local = localStorage.getItem('couple-backup');
+    if (local) state = JSON.parse(local);
+    return false;
+  }
+}
+
+async function saveToCloud() {
+  if (saving) return;
+  saving = true;
+  setSyncStatus('syncing');
+  localStorage.setItem('couple-backup', JSON.stringify(state));
+  try {
+    const r = await fetch(BASE, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+      body: JSON.stringify(state)
+    });
+    if (!r.ok) throw new Error();
+    setSyncStatus('ok');
+  } catch {
+    setSyncStatus('error');
+    showToast('Ошибка сохранения', 'error');
+  }
+  saving = false;
 }
 
 // ── Tabs
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach((el,i) => {
-    el.classList.toggle('active', (i===0 && tab==='budget') || (i===1 && tab==='goals'));
+    el.classList.toggle('active', (i===0&&tab==='budget')||(i===1&&tab==='goals'));
   });
-  document.getElementById('tab-budget').classList.toggle('hidden', tab !== 'budget');
-  document.getElementById('tab-goals').classList.toggle('hidden', tab !== 'goals');
+  document.getElementById('tab-budget').classList.toggle('hidden', tab!=='budget');
+  document.getElementById('tab-goals').classList.toggle('hidden', tab!=='goals');
 }
+
+// ── Helpers
+const fmt = n => '₽' + Math.round(n||0).toLocaleString('ru-RU');
+const uid = () => Math.random().toString(36).slice(2,9);
+const today = () => new Date().toISOString().slice(0,10);
 
 // ── Budget
 function startEditBudget() {
@@ -295,67 +303,66 @@ function cancelEditBudget() {
   document.getElementById('budget-display').classList.remove('hidden');
   document.getElementById('budget-edit').classList.add('hidden');
 }
-function saveBudget() {
+async function saveBudget() {
   const n = parseFloat(document.getElementById('budget-input').value);
   if (!n) return;
   state.budget = n;
-  save();
   cancelEditBudget();
   renderBudget();
+  await saveToCloud();
   showToast('Бюджет сохранён ✓');
 }
 
-function addExpense() {
+async function addExpense() {
   const amount = parseFloat(document.getElementById('exp-amount').value);
-  if (!amount || amount <= 0) { showToast('Введите сумму!'); return; }
-  const cat = document.getElementById('exp-cat').value;
+  if (!amount || amount <= 0) { showToast('Введите сумму!', 'error'); return; }
+  const cat  = document.getElementById('exp-cat').value;
   const note = document.getElementById('exp-note').value;
-  const who = document.getElementById('exp-who').value;
+  const who  = document.getElementById('exp-who').value;
   state.expenses.unshift({ id: uid(), amount, cat, note, who, date: today() });
-  save();
   document.getElementById('exp-amount').value = '';
   document.getElementById('exp-note').value = '';
   renderBudget();
+  await saveToCloud();
   showToast('Расход добавлен ✓');
 }
 
-function deleteExpense(id) {
+async function deleteExpense(id) {
   state.expenses = state.expenses.filter(e => e.id !== id);
-  save();
   renderBudget();
+  await saveToCloud();
 }
 
-function setFilter(cat) {
-  filterCat = cat;
-  renderBudget();
-}
+function setFilter(cat) { filterCat = cat; renderBudget(); }
 
 function renderBudget() {
+  document.getElementById('budget-loader').classList.add('hidden');
+  document.getElementById('budget-overview').classList.remove('hidden');
+  document.getElementById('add-expense-card').classList.remove('hidden');
+
   const expenses = state.expenses || [];
   const total = expenses.reduce((s,e) => s + e.amount, 0);
-  const remaining = (state.budget || 0) - total;
-  const pct = state.budget > 0 ? Math.min(100, (total / state.budget) * 100) : 0;
-  const barColor = pct > 90 ? '#f87171' : pct > 65 ? '#fbbf24' : '#34d399';
+  const remaining = (state.budget||0) - total;
+  const pct = state.budget > 0 ? Math.min(100,(total/state.budget*100)) : 0;
+  const barColor = pct>90?'#f87171':pct>65?'#fbbf24':'#34d399';
 
-  // Display
   const disp = document.getElementById('budget-display');
   disp.textContent = state.budget ? fmt(state.budget) : 'Нажмите, чтобы задать';
   disp.style.color = state.budget ? '#e2e0f0' : '#6b6888';
   disp.style.fontSize = state.budget ? '26px' : '15px';
 
   document.getElementById('remaining-val').textContent = fmt(remaining);
-  document.getElementById('remaining-val').style.color = remaining >= 0 ? '#34d399' : '#f87171';
-  document.getElementById('budget-bar').style.width = pct + '%';
+  document.getElementById('remaining-val').style.color = remaining>=0?'#34d399':'#f87171';
+  document.getElementById('budget-bar').style.width = pct+'%';
   document.getElementById('budget-bar').style.background = barColor;
-  document.getElementById('spent-label').textContent = 'Потрачено: ' + fmt(total);
-  document.getElementById('pct-label').textContent = Math.round(pct) + '%';
+  document.getElementById('spent-label').textContent = 'Потрачено: '+fmt(total);
+  document.getElementById('pct-label').textContent = Math.round(pct)+'%';
 
-  // Top cats
   const byCat = {};
-  expenses.forEach(e => { byCat[e.cat] = (byCat[e.cat]||0) + e.amount; });
+  expenses.forEach(e => { byCat[e.cat]=(byCat[e.cat]||0)+e.amount; });
   const top = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,4);
   const tcCard = document.getElementById('top-cats-card');
-  if (top.length > 0) {
+  if (top.length>0) {
     tcCard.classList.remove('hidden');
     document.getElementById('top-cats-list').innerHTML = top.map(([c,v]) => `
       <div class="top-cat">
@@ -364,18 +371,14 @@ function renderBudget() {
       </div>`).join('');
   } else tcCard.classList.add('hidden');
 
-  // Filter pills
-  const allCats = ['Все', ...CATS];
+  const allCats = ['Все',...CATS];
   document.getElementById('filter-pills').innerHTML = allCats.map(c =>
-    `<button class="pill${filterCat===c?' active':''}" onclick="setFilter('${c.replace(/'/g,"\\'")}')">
-      ${c.split(' ')[0] || c}
-    </button>`
+    `<button class="pill${filterCat===c?' active':''}" onclick="setFilter('${c.replace(/'/g,"\\'")}')">${c.split(' ')[0]||c}</button>`
   ).join('');
 
-  // Expense list
-  const filtered = filterCat === 'Все' ? expenses : expenses.filter(e => e.cat === filterCat);
+  const filtered = filterCat==='Все' ? expenses : expenses.filter(e=>e.cat===filterCat);
   const histCard = document.getElementById('history-card');
-  if (expenses.length > 0) {
+  if (expenses.length>0) {
     histCard.classList.remove('hidden');
     document.getElementById('expense-list').innerHTML = filtered.slice(0,30).map(e => `
       <div class="expense-item">
@@ -383,7 +386,7 @@ function renderBudget() {
           <span class="expense-emoji">${e.cat.split(' ')[0]}</span>
           <div>
             <div class="expense-name">${e.cat.split(' ').slice(1).join(' ')}</div>
-            <div class="expense-meta">${e.note || e.date} · ${e.who}</div>
+            <div class="expense-meta">${e.note||e.date} · ${e.who}</div>
           </div>
         </div>
         <div class="expense-right">
@@ -400,56 +403,55 @@ function buildEmojiPicker() {
     `<button class="emoji-btn${selectedEmoji===e?' selected':''}" onclick="selectEmoji('${e}')">${e}</button>`
   ).join('');
 }
-function selectEmoji(e) {
-  selectedEmoji = e;
-  buildEmojiPicker();
-}
+function selectEmoji(e) { selectedEmoji=e; buildEmojiPicker(); }
 
-function addGoal() {
-  const name = document.getElementById('goal-name').value.trim();
+async function addGoal() {
+  const name   = document.getElementById('goal-name').value.trim();
   const target = parseFloat(document.getElementById('goal-target').value);
-  if (!name || !target) { showToast('Заполните поля!'); return; }
-  state.goals.push({ id: uid(), name, target, saved: 0, emoji: selectedEmoji, created: today() });
-  save();
-  document.getElementById('goal-name').value = '';
-  document.getElementById('goal-target').value = '';
+  if (!name||!target) { showToast('Заполните поля!','error'); return; }
+  state.goals.push({ id:uid(), name, target, saved:0, emoji:selectedEmoji, created:today() });
+  document.getElementById('goal-name').value='';
+  document.getElementById('goal-target').value='';
   renderGoals();
+  await saveToCloud();
   showToast('Цель создана 🎯');
 }
 
-function contribute(id) {
-  const input = document.getElementById('contrib-' + id);
+async function contribute(id) {
+  const input = document.getElementById('contrib-'+id);
   const n = parseFloat(input.value);
-  if (!n || n <= 0) return;
-  state.goals = state.goals.map(g => g.id === id ? { ...g, saved: Math.min(g.target, g.saved + n) } : g);
-  save();
+  if (!n||n<=0) return;
+  state.goals = state.goals.map(g => g.id===id ? {...g, saved:Math.min(g.target,g.saved+n)} : g);
   renderGoals();
+  await saveToCloud();
   showToast('Накопления обновлены ✓');
 }
 
-function deleteGoal(id) {
-  state.goals = state.goals.filter(g => g.id !== id);
-  save();
+async function deleteGoal(id) {
+  state.goals = state.goals.filter(g=>g.id!==id);
   renderGoals();
+  await saveToCloud();
 }
 
 function renderGoals() {
-  const goals = state.goals || [];
+  document.getElementById('goals-loader').classList.add('hidden');
+  document.getElementById('add-goal-card').classList.remove('hidden');
+
+  const goals = state.goals||[];
   const summary = document.getElementById('goals-summary');
-  if (goals.length > 0) {
+  if (goals.length>0) {
     summary.classList.remove('hidden');
     document.getElementById('goals-count').textContent = goals.length;
     document.getElementById('goals-saved').textContent = fmt(goals.reduce((s,g)=>s+g.saved,0));
   } else summary.classList.add('hidden');
 
-  const barColor = (pct, done) => done ? '#34d399' : pct > 50 ? '#a78bfa' : '#f472b6';
-
+  const bc = (pct,done) => done?'#34d399':pct>50?'#a78bfa':'#f472b6';
   document.getElementById('goals-list').innerHTML = goals.map(g => {
-    const pct = g.target > 0 ? Math.min(100, (g.saved / g.target) * 100) : 0;
-    const done = pct >= 100;
+    const pct  = g.target>0?Math.min(100,(g.saved/g.target*100)):0;
+    const done = pct>=100;
     return `
-    <div class="goal-card${done?' done':''}" style="margin-bottom:16px">
-      ${done ? '<div class="goal-done-badge">ДОСТИГНУТО 🎉</div>' : ''}
+    <div class="goal-card${done?' done':''}">
+      ${done?'<div class="goal-done-badge">ДОСТИГНУТО 🎉</div>':''}
       <div class="goal-header">
         <div class="goal-info">
           <span class="goal-emoji">${g.emoji}</span>
@@ -464,31 +466,38 @@ function renderGoals() {
         <span style="font-weight:600">${fmt(g.saved)}</span>
         <span style="color:#6b6888">${Math.round(pct)}%</span>
       </div>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${barColor(pct,done)}"></div></div>
-      <div class="goal-remaining">Осталось: ${fmt(Math.max(0, g.target - g.saved))}</div>
-      ${!done ? `
+      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${bc(pct,done)}"></div></div>
+      <div class="goal-remaining">Осталось: ${fmt(Math.max(0,g.target-g.saved))}</div>
+      ${!done?`
       <div class="row" style="margin-top:12px">
         <input type="number" id="contrib-${g.id}" placeholder="Добавить ₽" style="flex:1">
         <button class="btn btn-green btn-sm" onclick="contribute('${g.id}')" style="white-space:nowrap">+ Пополнить</button>
-      </div>` : ''}
+      </div>`:''}
     </div>`;
   }).join('');
 }
 
-// ── Init
-load();
-buildEmojiPicker();
-renderBudget();
-renderGoals();
+// ── Auto-refresh every 30s
+setInterval(async () => {
+  await loadFromCloud();
+  renderBudget();
+  renderGoals();
+}, 30000);
 
-// Enter key support
+// ── Init
+(async () => {
+  buildEmojiPicker();
+  await loadFromCloud();
+  renderBudget();
+  renderGoals();
+})();
+
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const active = document.activeElement;
-    if (active.id === 'budget-input') saveBudget();
-    if (['exp-amount','exp-note'].includes(active.id)) addExpense();
-    if (['goal-name','goal-target'].includes(active.id)) addGoal();
-  }
+  if (e.key!=='Enter') return;
+  const id = document.activeElement.id;
+  if (id==='budget-input') saveBudget();
+  if (['exp-amount','exp-note'].includes(id)) addExpense();
+  if (['goal-name','goal-target'].includes(id)) addGoal();
 });
 </script>
 </body>
